@@ -65,9 +65,13 @@ public class CsvEntryServiceImpl implements CsvEntryService {
      */
     @Override
     public ByteArrayInputStream getDataByFile(File file) throws ServiceException {
+        // Check for null file and throw a more specific exception
+        if (file == null) {
+            throw new IllegalArgumentException("File cannot be null");
+        }
         // Check if file exists and entries are found
         List<CsvEntry> entries = csvEntryRepository.findByFile(file);
-        if (file == null || entries.isEmpty()) {
+        if (entries.isEmpty()) {
             throw new ServiceException("No data found for the specified file.");
         }
         // Convert the CsvEntry list to a ByteArrayInputStream representing the CSV data.

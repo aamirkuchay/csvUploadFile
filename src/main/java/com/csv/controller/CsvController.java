@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.csv.entity.File;
 import com.csv.helper.ExcelHelper;
@@ -37,6 +39,8 @@ public class CsvController {
 
     @Autowired
     private CsvEntryService csvService;
+
+    Logger logger = LoggerFactory.getLogger(CsvController.class);
 
 
     @Operation(
@@ -87,6 +91,7 @@ public class CsvController {
             String filename = "csv.xlsx";
             // Get the CSV data for this file.
             ByteArrayInputStream csvData = csvService.getDataByFile(file);
+
             // Prepare the response for downloading the CSV file.
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
@@ -94,10 +99,13 @@ public class CsvController {
                     .body(new InputStreamResource(csvData));
 
         } catch (ResourceNotFoundException e) {
-            // Handle case where the file is not found.
+            // Handle case where the file is not found (expected behavior)
+            // Explicitly return 404
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            // Handle unexpected errors.
+            // Handle unexpected exceptions more gracefully
+            // Log the error details
+            logger.error("Internal server error while downloading file (ID: " + id + ")", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error");
         }
     }
