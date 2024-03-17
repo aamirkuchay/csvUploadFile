@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.csv.exception.ResourceNotFoundException;
 import com.csv.response.ErrorResponse;
 import com.csv.response.ResponseBody;
+import com.csv.service.CsvEntryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -23,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.csv.entity.File;
 import com.csv.helper.ExcelHelper;
 import com.csv.repository.FileRepository;
-import com.csv.service.CsvEntryService;
 
 @RestController
 @RequestMapping("/api/")
@@ -32,8 +32,10 @@ public class CsvController {
 	@Autowired
 	private FileRepository fileRepository;
 	
-	@Autowired
-	private CsvEntryService csvService;
+//	@Autowired
+//	private CsvEntryService csvService;
+    @Autowired
+    private CsvEntryService csvService;
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {

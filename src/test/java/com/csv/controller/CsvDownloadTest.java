@@ -4,19 +4,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.csv.entity.File;
 import com.csv.repository.FileRepository;
-import com.csv.service.CsvEntryService;
+import com.csv.service.serviceImpl.CsvEntryServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.io.ByteArrayInputStream;
 import java.util.Optional;
@@ -30,7 +27,7 @@ public class CsvDownloadTest {
     private FileRepository fileRepository;
 
     @Mock
-    private CsvEntryService csvService;
+    private CsvEntryServiceImpl csvService;
 
     @InjectMocks
     private CsvController csvController;

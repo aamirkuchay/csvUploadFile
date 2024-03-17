@@ -1,11 +1,9 @@
 package com.csv.controller;
 
-import com.csv.entity.CsvEntry;
 import com.csv.entity.File;
-import com.csv.exception.ResourceNotFoundException;
 import com.csv.repository.FileRepository;
 import com.csv.response.ResponseBody;
-import com.csv.service.CsvEntryService;
+import com.csv.service.serviceImpl.CsvEntryServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -29,7 +27,7 @@ public class CsvControllerTest {
     private FileRepository fileRepository;
 
     @Mock
-    private CsvEntryService csvService;
+    private CsvEntryServiceImpl csvService;
 
     @InjectMocks
     private CsvController uploadController;
