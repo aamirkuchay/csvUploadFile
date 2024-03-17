@@ -81,11 +81,15 @@ public class ExcelHelper {
 
 					while (cellIterator.hasNext()) {
 						Cell cell = cellIterator.next();
-
-						if (columnIndex == 0) {
-							entry.setFinalColumn(cell.getStringCellValue());
+						switch (columnIndex) {
+							case 0:
+								entry.setFinalColumn(cell.getStringCellValue());
+								break;
+							default:
+								break;
 						}
 						columnIndex++;
+
 					}
 					entry.setFile(file);
 					entries.add(entry);
