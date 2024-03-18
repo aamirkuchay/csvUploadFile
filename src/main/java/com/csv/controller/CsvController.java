@@ -31,7 +31,7 @@ import com.csv.helper.ExcelHelper;
 import com.csv.repository.FileRepository;
 @Tag(name = "Rest Api of Csv File Upload", description = "We are uploading the csv file and get that file by id")
 @RestController
-@RequestMapping("/api/")
+@RequestMapping("/api/v1/user")
 public class CsvController {
 	
 	@Autowired
@@ -76,7 +76,7 @@ public class CsvController {
      * @return ResponseEntity object containing the CSV data or error message.
      * @throws ResourceNotFoundException Thrown if the file with the provided ID is not found.
      */
-    @GetMapping("download/{id}")
+    @GetMapping("/download/{id}")
     public ResponseEntity<?> downloadCsv(@PathVariable String id) {
         try {
             // Find the file by ID from the repository.
