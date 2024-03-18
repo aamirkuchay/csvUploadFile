@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.csv.exception.ResourceNotFoundException;
 import com.csv.service.CsvEntryService;
+import lombok.extern.log4j.Log4j2;
 import org.hibernate.service.spi.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -23,6 +24,7 @@ import com.csv.repository.CsvEntryRepository;
 import com.csv.repository.FileRepository;
 
 @Service
+@Log4j2
 public class CsvEntryServiceImpl implements CsvEntryService {
 	
 	@Autowired
@@ -44,13 +46,14 @@ public class CsvEntryServiceImpl implements CsvEntryService {
     public CompletableFuture<String> uploadAndProcessFile(MultipartFile file) {
         try {
             if (!ExcelHelper.checkExcelFormat(file)) {
-                throw new ServiceException("Please upload an Excel file.");
+                throw new ServiceException("Please upload an CSV file.");
             }
 
             String uniqueId = UUID.randomUUID().toString();
             File f = new File(uniqueId, true);
             fileRepository.save(f);
             List<CsvEntry> csvList = ExcelHelper.convertExcelToCsv(file.getInputStream(), f);
+            log.info("Check csvList {} for id:{}",csvList,f);
             csvEntryRepository.saveAll(csvList);
             f.setProcessing(false);
             fileRepository.save(f);
