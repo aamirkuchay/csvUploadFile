@@ -16,7 +16,10 @@ extension)
 
 # Api Documentation
 
-1 post/upload: uploads an Excel file
+
+   
+
+1. post/upload: uploads an Excel file
 
 . Request body Multipart named file
 
@@ -24,8 +27,8 @@ extension)
 and OnError : 400 BAD_REQUEST: invalid file format or empty file
 500 INTERNAL_SERVER_ERROR: internal server error during processing
 
-2
-Get/download/id : Download The excel file
+
+2. Get//download/id : Download The excel file
 
 . PathVariable we have taken the Id
 
