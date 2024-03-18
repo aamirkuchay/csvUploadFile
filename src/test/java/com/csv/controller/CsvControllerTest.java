@@ -4,7 +4,7 @@ import com.csv.entity.CsvEntry;
 import com.csv.entity.File;
 import com.csv.helper.ExcelHelper;
 import com.csv.repository.FileRepository;
-import com.csv.response.ResponseBody;
+import com.csv.dto.UploadFileResponseBody;
 import com.csv.service.serviceImpl.CsvEntryServiceImpl;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +24,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -62,7 +60,7 @@ public class CsvControllerTest {
 
         assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
 
-        ResponseBody responseBody = (ResponseBody) response.getBody();
+        UploadFileResponseBody responseBody = (UploadFileResponseBody) response.getBody();
         assertNotNull(responseBody.getUniqueId());
     }
 

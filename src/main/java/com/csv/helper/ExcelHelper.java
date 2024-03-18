@@ -18,6 +18,10 @@ import com.csv.entity.File;
 
 public class ExcelHelper {
 
+	public static String[] HEADERS = { "finalColumn" };
+
+	public static String SHEET_NAME = "csv_upload";
+
 	public static boolean checkExcelFormat(MultipartFile file) throws IOException {
 		// Check for null file
 		if (file == null || file.isEmpty()) {
@@ -131,9 +135,7 @@ public class ExcelHelper {
 		return entries;
 	}
 
-	public static String[] HEADERS = { "finalColumn" };
 
-	public static String SHEET_NAME = "csv_upload";
 
 
 	/**

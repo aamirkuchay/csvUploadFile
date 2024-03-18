@@ -4,11 +4,15 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 
+import com.csv.exception.ResourceNotFoundException;
 import com.csv.service.CsvEntryService;
 import org.hibernate.service.spi.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,31 +34,32 @@ public class CsvEntryServiceImpl implements CsvEntryService {
      * Override method to save a multipart file (likely an Excel file) and its related information.
      *
      * @param file The uploaded MultipartFile object representing the Excel file.
-     * @param f A File object containing additional information about the file (purpose needs clarification).
+     * @param f    A File object containing additional information about the file (purpose needs clarification).
+     * @return
      * @throws ServiceException Thrown when the file format is invalid.
-     * @throws IOException Thrown for any issues during file processing.
+     * @throws IOException      Thrown for any issues during file processing.
      */
-   @Override
-    public void save(MultipartFile file, File f) throws ServiceException, IOException {
-        // Validate file format
-        if (!ExcelHelper.checkExcelFormat(file)) {
-            throw new ServiceException("Invalid Excel file format. Please upload a valid .xls or .xlsx file.");
-        }
 
-        try (InputStream inputStream = file.getInputStream()) {
-            // Convert the Excel file to a list of CsvEntry objects for further processing.
-            List<CsvEntry> csvList = ExcelHelper.convertExcelToCsv(inputStream, f);
-            // Save CSV entries to the database
-            csvEntryRepository.saveAll(csvList);
-            // Mark file processing as completed
-            f.setProcessing(false);
-            // Save file metadata
+    @Async
+    public CompletableFuture<String> uploadAndProcessFile(MultipartFile file) {
+        try {
+            if (!ExcelHelper.checkExcelFormat(file)) {
+                throw new ServiceException("Please upload an Excel file.");
+            }
+
+            String uniqueId = UUID.randomUUID().toString();
+            File f = new File(uniqueId, true);
             fileRepository.save(f);
+            List<CsvEntry> csvList = ExcelHelper.convertExcelToCsv(file.getInputStream(), f);
+            csvEntryRepository.saveAll(csvList);
+            f.setProcessing(false);
+            fileRepository.save(f);
+
+            return CompletableFuture.completedFuture(uniqueId);
         } catch (IOException e) {
-            throw new ServiceException("Failed to save CSV entries: " + e.getMessage(), e);
+            throw new ServiceException("Failed to upload and process file: " + e.getMessage(), e);
         }
     }
-
 
     /**
      * Service method to retrieve CSV data associated with a specific file.
@@ -63,19 +68,28 @@ public class CsvEntryServiceImpl implements CsvEntryService {
      * @return ByteArrayInputStream containing the CSV data in bytes.
      * @throws ServiceException Thrown if no data is found for the specified file.
      */
+
     @Override
-    public ByteArrayInputStream getDataByFile(File file) throws ServiceException {
-        // Check for null file and throw a more specific exception
-        if (file == null) {
-            throw new IllegalArgumentException("File cannot be null");
+    public ByteArrayInputStream downloadCsvFile(String id) throws ResourceNotFoundException, ServiceException {
+        // Find the file by ID from the repository.
+        File file = fileRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("File not found with id: " + id));
+
+        // Check if the file is still being processed (upload not complete).
+        if (file.isProcessing()) {
+            throw new ServiceException("Upload is still being processed");
         }
-        // Check if file exists and entries are found
+
+        // Set a default filename with .xlsx extension
+        String filename = "csv.xlsx";
+        // Get the CSV data for this file.
         List<CsvEntry> entries = csvEntryRepository.findByFile(file);
+
+        // Check if entries are found
         if (entries.isEmpty()) {
             throw new ServiceException("No data found for the specified file.");
         }
+
         // Convert the CsvEntry list to a ByteArrayInputStream representing the CSV data.
         return ExcelHelper.dataToExcel(entries);
     }
-
 }

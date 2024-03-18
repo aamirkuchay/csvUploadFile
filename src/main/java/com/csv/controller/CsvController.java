@@ -2,14 +2,16 @@ package com.csv.controller;
 
 import java.io.ByteArrayInputStream;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import com.csv.exception.ResourceNotFoundException;
-import com.csv.response.ErrorResponse;
-import com.csv.response.ResponseBody;
+import com.csv.dto.ErrorResponse;
+import com.csv.dto.UploadFileResponseBody;
 import com.csv.service.CsvEntryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.hibernate.service.spi.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -50,24 +52,27 @@ public class CsvController {
     @ApiResponse(responseCode = "201", description = "HTTP Status Created")
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
+        String[] uniqueId = new String[1];
         try {
-            if (ExcelHelper.checkExcelFormat(file)) {
-                String uniqueId = UUID.randomUUID().toString();
-                File f = new File(uniqueId, true);
+            CompletableFuture<String> future = csvService.uploadAndProcessFile(file);
 
-                fileRepository.save(f);
-                csvService.save(file, f);
-                return ResponseEntity.accepted().body(new ResponseBody(uniqueId));
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Please upload an Excel file.");
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("Failed to upload file. Please try again later."));
+            // Handle the case when the upload and processing operation is completed
+            future.thenAccept(id -> {
+                uniqueId[0] = id;
+                // Do any post-processing here if needed
+                System.out.println("File processing completed asynchronously. Unique ID: " + uniqueId);
+            });
+
+            UploadFileResponseBody responseBody = new UploadFileResponseBody(uniqueId[0]);
+            return ResponseEntity
+                    .accepted()
+                    .body(responseBody);
+        } catch (ServiceException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse(e.getMessage()));
         }
     }
-
 
     /**
      * GET endpoint to download a CSV file associated with a specific file ID.
@@ -76,32 +81,24 @@ public class CsvController {
      * @return ResponseEntity object containing the CSV data or error message.
      * @throws ResourceNotFoundException Thrown if the file with the provided ID is not found.
      */
+
     @GetMapping("/download/{id}")
     public ResponseEntity<?> downloadCsv(@PathVariable String id) {
         try {
-            // Find the file by ID from the repository.
-            File file = fileRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("File not found with id: " + id));
-
-            // Check if the file is still being processed (upload not complete).
-            if (file.isProcessing()) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Upload is still being processed");
-            }
-
-            // Set a default filename with .xlsx extension
-            String filename = "csv.xlsx";
-            // Get the CSV data for this file.
-            ByteArrayInputStream csvData = csvService.getDataByFile(file);
+            ByteArrayInputStream csvData = csvService.downloadCsvFile(id);
 
             // Prepare the response for downloading the CSV file.
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=csv.xlsx")
                     .contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
                     .body(new InputStreamResource(csvData));
-
         } catch (ResourceNotFoundException e) {
             // Handle case where the file is not found (expected behavior)
             // Explicitly return 404
             return ResponseEntity.notFound().build();
+        } catch (ServiceException e) {
+            // Handle other service-related exceptions
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         } catch (Exception e) {
             // Handle unexpected exceptions more gracefully
             // Log the error details
@@ -109,7 +106,6 @@ public class CsvController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error");
         }
     }
-
 
 
 }

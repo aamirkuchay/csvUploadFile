@@ -5,8 +5,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 
 public interface CsvEntryService {
-    void save(MultipartFile file, File f) throws IOException;
-    ByteArrayInputStream getDataByFile(File file);
+
+    CompletableFuture<String> uploadAndProcessFile(MultipartFile file);
+
+    ByteArrayInputStream downloadCsvFile(String id);
 }
